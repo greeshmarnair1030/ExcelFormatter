@@ -427,10 +427,23 @@ class ExcelFormatter {
             const day = parseInt(match[1], 10);
             const month = parseInt(match[2], 10);
             
-            // Create a date object for comparison (using current year)
-            // This allows proper date comparison
-            const currentYear = new Date().getFullYear();
-            const date = new Date(currentYear, month - 1, day);
+            // For dates spanning year boundary (Dec to Jan), we need to handle year correctly
+            // Assume dates are recent - if month is 12 (Dec) and current month is 1-6, it's previous year
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // getMonth() is 0-based
+            
+            let year = currentYear;
+            // If we're in Jan-Jun and the date is in Dec, it's from previous year
+            if (currentMonth <= 6 && month === 12) {
+                year = currentYear - 1;
+            }
+            // If we're in Jul-Dec and the date is in Jan-Jun, it might be next year
+            // But for bug tracking, assume it's current year
+            
+            const date = new Date(year, month - 1, day);
+            
+            console.log(`Extracted date: ${day}/${month} -> ${date.toISOString()} (timestamp: ${date.getTime()})`);
             
             return date.getTime();
         }

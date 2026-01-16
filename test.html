@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Excel Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Test Excel File Reading</h1>
+    <input type="file" id="fileInput" accept=".xlsx">
+    <div id="output"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    console.log('Sheets:', workbook.SheetNames);
+                    
+                    const sheet = workbook.Sheets['Bugs Reported'];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+                    
+                    console.log('Columns:', Object.keys(jsonData[0]));
+                    console.log('First row:', jsonData[0]);
+                    
+                    // Test column finding
+                    const allCols = Object.keys(jsonData[0]);
+                    const emptyCol = allCols.find(col => col.includes('__EMPTY'));
+                    
+                    if (emptyCol) {
+                        console.log('Found __EMPTY column:', emptyCol);
+                        console.log('Sample value:', jsonData[0][emptyCol]);
+                    }
+                    
+                    document.getElementById('output').innerHTML = '<pre>' + 
+                        JSON.stringify({
+                            sheets: workbook.SheetNames,
+                            columns: Object.keys(jsonData[0]),
+                            firstRow: jsonData[0]
+                        }, null, 2) + '</pre>';
+                        
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('output').innerHTML = 'Error: ' + error.message;
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>
